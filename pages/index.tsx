@@ -51,8 +51,8 @@ const Home = (props: any) => {
           <StarvaConnect />
         </div>
         <div>
-          Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information
-          is gone.
+          {`Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information
+          is gone.`} 
         </div>
       </main>
 
