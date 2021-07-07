@@ -64,7 +64,7 @@ const Home = (props: any) => {
 };
 
 export const getServerSideProps = async (context: any) => {
-  const stravaLoginUrl = getStravaUrl('http://localhost:3000/');
+  const stravaLoginUrl = getStravaUrl();
   const stravaUser = context.query.code ? await getStravaAthlete(context.query.code.toString()) : null;
   return {
     props: { stravaLoginUrl, stravaUser },

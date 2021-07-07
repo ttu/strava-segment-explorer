@@ -12,6 +12,7 @@ Add to `.env.local`
 ```
 STRAVA_CLIENT_ID=[Client ID]
 STRAVA_CLIENT_SECRET=[Client Secret]
+STRAVA_CALLBACK_URL=[Callback url]
 ```
 ## Strava
 

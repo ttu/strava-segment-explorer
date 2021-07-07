@@ -17,18 +17,17 @@ const handleGetStravaAthlete = async (req: NextApiRequest, res: NextApiResponse)
 };
 
 const handleGetStravaUrl = (req: NextApiRequest, res: NextApiResponse) => {
-  const redirectUrl = req.query.redirectUrl?.toString() ?? '';
-  res.send({ url: getStravaUrl(redirectUrl) });
+  res.send({ url: getStravaUrl() });
 };
 
 export const getStravaAthlete = (code: string) => strava.oauth.getToken(code);
 
-export const getStravaUrl = (redirectUrl: string) => {
+export const getStravaUrl = () => {
   const url = new URL('http://www.strava.com/oauth/authorize');
   url.search = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID ?? '',
     response_type: 'code',
-    redirect_uri: redirectUrl,
+    redirect_uri: process.env.STRAVA_CALLBACK_URL ?? '',
     approval_prompt: 'auto',
     scope: 'read,activity:read',
   }).toString();
