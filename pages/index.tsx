@@ -6,14 +6,22 @@ import { useRouter } from 'next/router';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
 
-type User = {
-  name: string;
+type Token = {
+  expires_at: number;
+  expires_in: number;
+  refresh_token: string;
+  access_token: string;
 };
 
-const Home = (props: any) => {
-  const { stravaLoginUrl, stravaUser } = props;
+type User = {
+  name: string;
+  token: Token;
+};
+
+const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   const [user] = useState<User>({
-    name: stravaUser ? stravaUser.athlete.firstname : '',
+    name: stravaUser ? stravaUser.name : '',
+    token: stravaUser ? stravaUser.token : '',
   });
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -47,12 +55,10 @@ const Home = (props: any) => {
 
       <main className={styles.main}>
         <h3 className={styles.title}>Welcome {user.name}</h3>
-        <div onClick={(x) => login()}>
-          <StarvaConnect />
-        </div>
+        <StravaLoginButton loginAction={() => login()} />
         <div>
           {`Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information
-          is gone.`} 
+          is gone.`}
         </div>
       </main>
 
@@ -63,11 +69,32 @@ const Home = (props: any) => {
   );
 };
 
+const StravaLoginButton = ({ loginAction }: { loginAction: () => void }) => (
+  <div onClick={(x) => loginAction()} style={{ cursor: 'pointer' }}>
+    <StarvaConnect />
+  </div>
+);
+
 export const getServerSideProps = async (context: any) => {
   const stravaLoginUrl = getStravaUrl();
-  const stravaUser = context.query.code ? await getStravaAthlete(context.query.code.toString()) : null;
+  const stravaAthlete = context.query.code ? await getStravaAthlete(context.query.code.toString()) : null;
+  const stravaUser: User | null = stravaAthlete
+    ? {
+        name: stravaAthlete.athlete.firstname,
+        token: {
+          expires_at: stravaAthlete.expires_at,
+          expires_in: stravaAthlete.expires_in,
+          access_token: stravaAthlete.access_token,
+          refresh_token: stravaAthlete.refresh_token,
+        },
+      }
+    : null;
+
   return {
-    props: { stravaLoginUrl, stravaUser },
+    props: {
+      stravaLoginUrl,
+      stravaUser,
+    },
   };
 };
 

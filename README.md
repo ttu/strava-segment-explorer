@@ -1,4 +1,5 @@
-# Strava Segment Explorer
+# Strava Segment Explorer & Navigator
+
 ## Environment
 
 Create `.env.local`-file to root
@@ -37,7 +38,7 @@ https://developers.strava.com/docs/reference/#api-Routes-getRouteAsGPX
 
 ### Strava login
 
-![](.\docs\strava_login.png)
+![Strava login diagram](./docs/strava_login.png)
 
 # Next.js
 
