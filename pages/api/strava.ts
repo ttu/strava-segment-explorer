@@ -1,23 +1,52 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import strava from 'strava-v3';
 
-type Data = {
-  name: string;
-  data: any;
+export type SegmentExploreParams = {
+  /** southwest corner latitutde */
+  southWestLat: number;
+  /** Southwest corner longitude */
+  southWestLng: number;
+  /** northeast corner latitude */
+  northEastLat: number;
+  /** northeast corner longitude */
+  northEastLng: number;
 };
 
-// NOTE: All backend requests are now done during SSR
-const handler = async (req: NextApiRequest, res: NextApiResponse<Data>) => {
-  return req.method === 'POST' ? handleGetStravaAthlete(req, res) : handleGetStravaUrl(req, res);
+const handler = (req: NextApiRequest, res: NextApiResponse) => {
+  return req.method === 'POST' ? handleGetSegments(req, res) : res.status(405);
 };
 
+const handleGetSegments = async (req: NextApiRequest, res: NextApiResponse) => {
+  const access_token = req.headers['authorization']?.toString() ?? '';
+  const { southWestLat, southWestLng, northEastLat, northEastLng } = JSON.parse(req.body);
+  const params: SegmentExploreParams = {
+    southWestLat: southWestLat,
+    southWestLng: southWestLng,
+    northEastLat: northEastLat,
+    northEastLng: northEastLng,
+  };
+  const segmentsResponse = await getSegments(access_token, params);
+  res.send({ segments: segmentsResponse.segments });
+};
+
+// NOTE: Done during SSR
 const handleGetStravaAthlete = async (req: NextApiRequest, res: NextApiResponse) => {
   const stravaAthlete = await getStravaAthlete(req.body);
   res.status(200).json({ name: stravaAthlete.athlete.firstname, data: stravaAthlete });
 };
 
+// NOTE: Done during SSR
 const handleGetStravaUrl = (req: NextApiRequest, res: NextApiResponse) => {
   res.send({ url: getStravaUrl() });
+};
+
+export const getSegments = (accessToken: string, query: SegmentExploreParams) => {
+  const params = {
+    access_token: accessToken,
+    bounds: `${query.southWestLat},${query.southWestLng},${query.northEastLat},${query.northEastLng}`, // e.g. '37.821362,-122.505373,37.842038,-122.465977'
+    activity_type: 'Ride',
+  };
+  return strava.segments.explore(params);
 };
 
 export const getStravaAthlete = (code: string) => strava.oauth.getToken(code);

@@ -1,8 +1,8 @@
 import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css';
-import { getStravaAthlete, getStravaUrl } from './api/strava';
 import { useRouter } from 'next/router';
+import { getStravaAthlete, getStravaUrl } from './api/strava';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
 
@@ -18,12 +18,15 @@ type User = {
   token: Token;
 };
 
+const disclaimer = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
+
 const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   const [user] = useState<User>({
     name: stravaUser ? stravaUser.name : '',
     token: stravaUser ? stravaUser.token : '',
   });
   const [loading, setLoading] = useState<boolean>(false);
+  const [segments, setSegments] = useState<any[]>([]);
   const router = useRouter();
 
   console.log('Strava user:', stravaUser);
@@ -38,12 +41,23 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     location.href = stravaLoginUrl;
   };
 
-  if (loading)
-    return (
-      <div>
-        <h2>Loading...</h2>
-      </div>
-    );
+  const fetchSegments = async () => {
+    const f = await fetch('/api/strava', {
+      method: 'POST',
+      headers: { Authorization: user.token.access_token },
+      body: JSON.stringify({
+        southWestLat: 37.821362,
+        southWestLng: -122.505373,
+        northEastLat: 37.842038,
+        northEastLng: -122.465977,
+      }),
+    });
+    const data = await f.json();
+    console.log(data.segments);
+    setSegments(data.segments);
+  };
+
+  if (loading) return <LoadingComponent />;
 
   return (
     <div className={styles.container}>
@@ -55,12 +69,11 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
 
       <main className={styles.main}>
         <h3 className={styles.title}>Welcome {user.name}</h3>
-        <StravaLoginButton loginAction={() => login()} />
-        <div>
-          {`Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information
-          is gone.`}
-        </div>
+        {!user.token && <StravaLoginButton loginAction={() => login()} />}
+        {user.token && <Segments fetchAction={fetchSegments} segments={segments} />}
       </main>
+
+      <div>{disclaimer}</div>
 
       <footer style={{ width: '30%' }}>
         <PoweredByStrava />
@@ -69,9 +82,28 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   );
 };
 
+const LoadingComponent = () => (
+  <div>
+    <h2>Loading...</h2>
+  </div>
+);
+
 const StravaLoginButton = ({ loginAction }: { loginAction: () => void }) => (
-  <div onClick={(x) => loginAction()} style={{ cursor: 'pointer' }}>
+  <div onClick={() => loginAction()} style={{ cursor: 'pointer' }}>
     <StarvaConnect />
+  </div>
+);
+
+const Segments = ({ fetchAction, segments }: { fetchAction: () => void; segments: any[] }) => (
+  <div style={{ paddingTop: '50px' }}>
+    <div onClick={() => fetchAction()} style={{ cursor: 'pointer' }}>
+      Fetch
+    </div>
+    <div>
+      {segments.map((s) => (
+        <div key={s.id}>{s.name}</div>
+      ))}
+    </div>
   </div>
 );
 
