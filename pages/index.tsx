@@ -42,6 +42,8 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   };
 
   const fetchSegments = async () => {
+    setLoading(true);
+
     const f = await fetch('/api/strava', {
       method: 'POST',
       headers: { Authorization: user.token.access_token },
@@ -55,9 +57,18 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     const data = await f.json();
     console.log(data.segments);
     setSegments(data.segments);
+    setLoading(false);
   };
 
-  if (loading) return <LoadingComponent />;
+  const mainContent = loading ? (
+    <LoadingComponent />
+  ) : (
+    <>
+      <h3 className={styles.title}>Welcome {user.name}</h3>
+      {!user.token && <StravaLoginButton loginAction={() => login()} />}
+      {user.token && <Segments fetchAction={fetchSegments} segments={segments} />}
+    </>
+  );
 
   return (
     <div className={styles.container}>
@@ -67,11 +78,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
-        <h3 className={styles.title}>Welcome {user.name}</h3>
-        {!user.token && <StravaLoginButton loginAction={() => login()} />}
-        {user.token && <Segments fetchAction={fetchSegments} segments={segments} />}
-      </main>
+      <main className={styles.main}>{mainContent}</main>
 
       <div>{disclaimer}</div>
 
