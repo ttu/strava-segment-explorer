@@ -5,11 +5,16 @@ module.exports = {
     // Fixes npm packages that depend on node modules
     if (!isServer) {
       config.node = {
-        net: "empty",
-        tls: "empty",
-        fs: "empty",
+        net: 'empty',
+        tls: 'empty',
+        fs: 'empty',
       };
     }
+
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
 
     return config;
   },

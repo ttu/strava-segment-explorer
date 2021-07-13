@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { getStravaAthlete, getStravaUrl } from './api/strava';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
+import dynamic from 'next/dynamic';
 
 type Token = {
   expires_at: number;
@@ -19,6 +20,8 @@ type User = {
 };
 
 const disclaimer = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
+
+const MapWithNoSSR = dynamic(() => import('./Map'), { ssr: false });
 
 const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   const [user] = useState<User>({
@@ -80,6 +83,8 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
 
       <main className={styles.main}>{mainContent}</main>
 
+      <MapWithNoSSR segments={[]} />
+
       <div>{disclaimer}</div>
 
       <footer style={{ width: '30%' }}>
@@ -107,9 +112,10 @@ const Segments = ({ fetchAction, segments }: { fetchAction: () => void; segments
       Fetch
     </div>
     <div>
-      {segments.map((s) => (
+      {/* <MapWithNoSSR segments={segments} /> */}
+      {/* {segments.map((s) => (
         <div key={s.id}>{s.name}</div>
-      ))}
+      ))} */}
     </div>
   </div>
 );
