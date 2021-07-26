@@ -45,15 +45,12 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     location.href = stravaLoginUrl;
   };
 
-  const fetchSegments = async () => {
-    setLoading(true);
+  const updateSegments = async (params: SegmentExploreParams) => {
+    if (!user.token) return;
 
-    const params: SegmentExploreParams = {
-      southWestLat: 37.821362,
-      southWestLng: -122.505373,
-      northEastLat: 37.842038,
-      northEastLng: -122.465977,
-    };
+    console.log(params);
+
+    setLoading(true);
 
     const segmentResponse = await fetch('/api/strava', {
       method: 'POST',
@@ -74,7 +71,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     <>
       <h3 className={styles.title}>Welcome {user.name}</h3>
       {!user.token && <StravaLoginButton loginAction={() => login()} />}
-      {user.token && <Segments fetchAction={fetchSegments} segments={segments} />}
+      {user.token && <Segments segments={segments} />}
     </>
   );
 
@@ -88,7 +85,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
 
       <main className={styles.main}>{mainContent}</main>
 
-      <MapWithNoSSR segments={[]} />
+      <MapWithNoSSR segments={[]} updateSegments={updateSegments} />
 
       <div>{DISCLAIMER}</div>
 
@@ -111,16 +108,13 @@ const StravaLoginButton = ({ loginAction }: { loginAction: () => void }) => (
   </div>
 );
 
-const Segments = ({ fetchAction, segments }: { fetchAction: () => void; segments: any[] }) => (
+const Segments = ({ segments }: { segments: any[] }) => (
   <div style={{ paddingTop: '50px' }}>
-    <div onClick={() => fetchAction()} style={{ cursor: 'pointer' }}>
-      Fetch
-    </div>
     <div>
       {/* <MapWithNoSSR segments={segments} /> */}
-      {/* {segments.map((s) => (
+      {segments.map((s) => (
         <div key={s.id}>{s.name}</div>
-      ))} */}
+      ))}
     </div>
   </div>
 );

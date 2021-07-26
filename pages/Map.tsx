@@ -1,8 +1,15 @@
 import useSSR from 'use-ssr';
 
 import 'leaflet/dist/leaflet.css';
+import { SegmentExploreParams } from './api/types';
 
-const Map = ({ segments }: { segments: any[] }) => {
+const Map = ({
+  segments,
+  updateSegments,
+}: {
+  segments: any[];
+  updateSegments: (params: SegmentExploreParams) => void;
+}) => {
   // NOTE: Build fails if leaflet is imported in the beginning of the file
   const { isServer } = useSSR();
   if (isServer) return <></>;
@@ -25,8 +32,33 @@ const Map = ({ segments }: { segments: any[] }) => {
           A pretty CSS3 popup. <br /> Easily customizable.
         </Popup>
       </Marker>
+      <SegmentList updateSegments={updateSegments} />
     </MapContainer>
   );
+};
+
+const SegmentList = ({ updateSegments }: { updateSegments: (params: SegmentExploreParams) => void }) => {
+  const { useMapEvents } = require('react-leaflet');
+
+  const map = useMapEvents({
+    moveend() {
+      getSegments();
+    },
+  });
+
+  const getSegments = () => {
+    const b = map.getBounds();
+    const extend = map.getZoom() / 1000;
+    const params: SegmentExploreParams = {
+      northEastLng: b.getNorthEast().lng + extend,
+      northEastLat: b.getNorthEast().lat + extend,
+      southWestLng: b.getSouthWest().lng - extend,
+      southWestLat: b.getSouthWest().lat - extend,
+    };
+    updateSegments(params);
+  };
+
+  return <></>;
 };
 
 export default Map;
