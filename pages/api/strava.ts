@@ -1,20 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import strava from 'strava-v3';
+import { SegmentExploreParams } from './types';
 
-export type SegmentExploreParams = {
-  /** southwest corner latitutde */
-  southWestLat: number;
-  /** Southwest corner longitude */
-  southWestLng: number;
-  /** northeast corner latitude */
-  northEastLat: number;
-  /** northeast corner longitude */
-  northEastLng: number;
-};
-
-const handler = (req: NextApiRequest, res: NextApiResponse) => {
-  return req.method === 'POST' ? handleGetSegments(req, res) : res.status(405);
-};
+const handler = (req: NextApiRequest, res: NextApiResponse) =>
+  req.method === 'POST' ? handleGetSegments(req, res) : res.status(405);
 
 const handleGetSegments = async (req: NextApiRequest, res: NextApiResponse) => {
   const access_token = req.headers['authorization']?.toString() ?? '';

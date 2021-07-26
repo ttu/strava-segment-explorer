@@ -6,6 +6,7 @@ import { getStravaAthlete, getStravaUrl } from './api/strava';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
 import dynamic from 'next/dynamic';
+import { SegmentExploreParams } from './api/types';
 
 type Token = {
   expires_at: number;
@@ -19,7 +20,7 @@ type User = {
   token: Token;
 };
 
-const disclaimer = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
+const DISCLAIMER = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
 
 const MapWithNoSSR = dynamic(() => import('./Map'), { ssr: false });
 
@@ -47,18 +48,22 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   const fetchSegments = async () => {
     setLoading(true);
 
-    const f = await fetch('/api/strava', {
+    const params: SegmentExploreParams = {
+      southWestLat: 37.821362,
+      southWestLng: -122.505373,
+      northEastLat: 37.842038,
+      northEastLng: -122.465977,
+    };
+
+    const segmentResponse = await fetch('/api/strava', {
       method: 'POST',
       headers: { Authorization: user.token.access_token },
-      body: JSON.stringify({
-        southWestLat: 37.821362,
-        southWestLng: -122.505373,
-        northEastLat: 37.842038,
-        northEastLng: -122.465977,
-      }),
+      body: JSON.stringify(params),
     });
-    const data = await f.json();
+
+    const data = await segmentResponse.json();
     console.log(data.segments);
+
     setSegments(data.segments);
     setLoading(false);
   };
@@ -85,7 +90,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
 
       <MapWithNoSSR segments={[]} />
 
-      <div>{disclaimer}</div>
+      <div>{DISCLAIMER}</div>
 
       <footer style={{ width: '30%' }}>
         <PoweredByStrava />
@@ -120,10 +125,10 @@ const Segments = ({ fetchAction, segments }: { fetchAction: () => void; segments
   </div>
 );
 
-export const getServerSideProps = async (context: any) => {
-  const stravaLoginUrl = getStravaUrl();
-  const stravaAthlete = context.query.code ? await getStravaAthlete(context.query.code.toString()) : null;
-  const stravaUser: User | null = stravaAthlete
+// Need to return null instead of undefined
+// Reason: `undefined` cannot be serialized as JSON. Please use `null` or omit this value.
+const stravaAtheleteToUser = (stravaAthlete: any): User | null =>
+  stravaAthlete
     ? {
         name: stravaAthlete.athlete.firstname,
         token: {
@@ -134,6 +139,11 @@ export const getServerSideProps = async (context: any) => {
         },
       }
     : null;
+
+export const getServerSideProps = async (context: any) => {
+  const stravaLoginUrl = getStravaUrl();
+  const stravaAthlete = context.query.code ? await getStravaAthlete(context.query.code.toString()) : null;
+  const stravaUser = stravaAtheleteToUser(stravaAthlete);
 
   return {
     props: {
