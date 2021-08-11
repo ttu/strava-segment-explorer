@@ -6,7 +6,7 @@ import { getStravaAthlete, getStravaUrl } from './api/strava';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
 import dynamic from 'next/dynamic';
-import { SegmentExploreParams } from './api/types';
+import { SegmentExploreParams, SegmentExploreResponse, StravaSegment } from './api/types';
 
 type Token = {
   expires_at: number;
@@ -30,7 +30,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     token: stravaUser ? stravaUser.token : '',
   });
   const [loading, setLoading] = useState<boolean>(false);
-  const [segments, setSegments] = useState<any[]>([]);
+  const [segments, setSegments] = useState<StravaSegment[]>([]);
   const router = useRouter();
 
   console.log('Strava user:', stravaUser);
@@ -58,7 +58,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
       body: JSON.stringify(params),
     });
 
-    const data = await segmentResponse.json();
+    const data = await segmentResponse.json() as SegmentExploreResponse;
     console.log(data.segments);
 
     setSegments(data.segments);
@@ -70,8 +70,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   ) : (
     <>
       <h3 className={styles.title}>Welcome {user.name}</h3>
-      {!user.token && <StravaLoginButton loginAction={() => login()} />}
-      {user.token && <Segments segments={segments} />}
+      {user.token ? <Segments segments={segments} /> : <StravaLoginButton loginAction={() => login()} />}
     </>
   );
 
@@ -85,7 +84,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
 
       <main className={styles.main}>{mainContent}</main>
 
-      <MapWithNoSSR segments={[]} updateSegments={updateSegments} />
+      <MapWithNoSSR segments={segments} updateSegments={updateSegments} />
 
       <div>{DISCLAIMER}</div>
 
@@ -108,7 +107,7 @@ const StravaLoginButton = ({ loginAction }: { loginAction: () => void }) => (
   </div>
 );
 
-const Segments = ({ segments }: { segments: any[] }) => (
+const Segments = ({ segments }: { segments: StravaSegment[] }) => (
   <div style={{ paddingTop: '50px' }}>
     <div>
       {/* <MapWithNoSSR segments={segments} /> */}

@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import strava from 'strava-v3';
-import { SegmentExploreParams } from './types';
+import { SegmentExploreParams, SegmentExploreResponse, StravaSegment } from './types';
 
 const handler = (req: NextApiRequest, res: NextApiResponse) =>
   req.method === 'POST' ? handleGetSegments(req, res) : res.status(405);
 
-const handleGetSegments = async (req: NextApiRequest, res: NextApiResponse) => {
+const handleGetSegments = async (req: NextApiRequest, res: NextApiResponse<SegmentExploreResponse>) => {
   const access_token = req.headers['authorization']?.toString() ?? '';
   const { southWestLat, southWestLng, northEastLat, northEastLng } = JSON.parse(req.body);
   const params: SegmentExploreParams = {
@@ -15,7 +15,7 @@ const handleGetSegments = async (req: NextApiRequest, res: NextApiResponse) => {
     northEastLng: northEastLng,
   };
   const segmentsResponse = await getSegments(access_token, params);
-  res.send({ segments: segmentsResponse.segments });
+  res.send(segmentsResponse);
 };
 
 // NOTE: Done during SSR
@@ -29,13 +29,22 @@ const handleGetStravaUrl = (req: NextApiRequest, res: NextApiResponse) => {
   res.send({ url: getStravaUrl() });
 };
 
-export const getSegments = (accessToken: string, query: SegmentExploreParams) => {
+// Types are missing from strava-v3
+type StravaSegmentsExploreResult = {
+  segments: StravaSegment[];
+};
+
+export const getSegments = async (
+  accessToken: string,
+  query: SegmentExploreParams
+): Promise<SegmentExploreResponse> => {
   const params = {
     access_token: accessToken,
     bounds: `${query.southWestLat},${query.southWestLng},${query.northEastLat},${query.northEastLng}`, // e.g. '37.821362,-122.505373,37.842038,-122.465977'
     activity_type: 'Ride',
   };
-  return strava.segments.explore(params);
+  const result = (await strava.segments.explore(params)) as StravaSegmentsExploreResult;
+  return { segments: result.segments };
 };
 
 export const getStravaAthlete = (code: string) => strava.oauth.getToken(code);

@@ -1,13 +1,13 @@
 import useSSR from 'use-ssr';
 
 import 'leaflet/dist/leaflet.css';
-import { SegmentExploreParams } from './api/types';
+import { SegmentExploreParams, StravaSegment } from './api/types';
 
 const Map = ({
   segments,
   updateSegments,
 }: {
-  segments: any[];
+  segments: StravaSegment[];
   updateSegments: (params: SegmentExploreParams) => void;
 }) => {
   // NOTE: Build fails if leaflet is imported in the beginning of the file

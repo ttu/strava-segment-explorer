@@ -8,3 +8,14 @@ export type SegmentExploreParams = {
   /** northeast corner longitude */
   northEastLng: number;
 };
+
+export type SegmentExploreResponse = {
+  segments: StravaSegment[];
+};
+
+// https://developers.strava.com/docs/reference/#api-Segments-exploreSegments
+export type StravaSegment = {
+  id: number;
+  name: string;
+  [key: string]: any;
+};
