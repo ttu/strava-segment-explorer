@@ -58,21 +58,30 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
       body: JSON.stringify(params),
     });
 
-    const data = await segmentResponse.json() as SegmentExploreResponse;
+    const data = (await segmentResponse.json()) as SegmentExploreResponse;
     console.log(data.segments);
 
     setSegments(data.segments);
     setLoading(false);
   };
 
-  const mainContent = loading ? (
-    <LoadingComponent />
-  ) : (
-    <>
-      <h3 className={styles.title}>Welcome {user.name}</h3>
-      {user.token ? <Segments segments={segments} /> : <StravaLoginButton loginAction={() => login()} />}
-    </>
-  );
+  const MainContent = () => {
+    const loginContent = loading ? (
+      <LoadingComponent />
+    ) : (
+      <>
+        <h3 className={styles.title}>Welcome {user.name}</h3>
+        {user.token ? <Segments segments={segments} /> : <StravaLoginButton loginAction={() => login()} />}
+      </>
+    );
+
+    return (
+      <>
+        <main className={styles.main}>{loginContent}</main>
+        <MapWithNoSSR segments={segments} updateSegments={updateSegments} />
+      </>
+    );
+  };
 
   return (
     <div className={styles.container}>
@@ -82,9 +91,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>{mainContent}</main>
-
-      <MapWithNoSSR segments={segments} updateSegments={updateSegments} />
+      <MainContent />
 
       <div>{DISCLAIMER}</div>
 
