@@ -1,14 +1,16 @@
+import React from 'react';
 import useSSR from 'use-ssr';
-
 import 'leaflet/dist/leaflet.css';
-import { SegmentExploreParams, StravaSegment } from './api/types';
+import { MapSearchUpdateParams, MapSelection, SegmentExploreParams, StravaSegment } from './api/types';
 
 const Map = ({
   segments,
-  updateSegments,
+  mapSelection,
+  mapUpdateEvent,
 }: {
   segments: StravaSegment[];
-  updateSegments: (params: SegmentExploreParams) => void;
+  mapSelection: MapSelection;
+  mapUpdateEvent: (params: MapSearchUpdateParams) => void;
 }) => {
   // NOTE: Build fails if leaflet is imported in the beginning of the file
   const { isServer } = useSSR();
@@ -17,46 +19,64 @@ const Map = ({
   // https://github.com/PaulLeCam/react-leaflet/issues/45
   // https://github.com/PaulLeCam/react-leaflet/issues/753#issuecomment-821707234
 
-  const { MapContainer, Marker, Popup, TileLayer } = require('react-leaflet');
-  const L = require('leaflet');
-  const icon = L.icon({ iconUrl: '/leaflet/marker-icon.png' });
+  const { MapContainer, TileLayer } = require('react-leaflet');
 
   return (
-    <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{ height: 400, width: '100%' }}>
+    <MapContainer
+      center={mapSelection.center}
+      zoom={mapSelection.zoom}
+      scrollWheelZoom={false}
+      style={{ height: 400, width: '100%' }}
+    >
       <TileLayer
         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Marker position={[51.505, -0.09]} icon={icon}>
-        <Popup>
-          A pretty CSS3 popup. <br /> Easily customizable.
-        </Popup>
-      </Marker>
-      <SegmentList updateSegments={updateSegments} />
+      <MarkerList segments={segments} />
+      <SegmentUpdater mapUpdaveEvent={mapUpdateEvent} />
     </MapContainer>
   );
 };
 
-const SegmentList = ({ updateSegments }: { updateSegments: (params: SegmentExploreParams) => void }) => {
+const MarkerList = ({ segments }: { segments: StravaSegment[] }) => {
+  const { Marker, Popup } = require('react-leaflet');
+  const L = require('leaflet');
+  const icon = L.icon({ iconUrl: '/leaflet/marker-icon.png' });
+
+  const markers = segments.map((segment) => (
+    <Marker position={[segment.start_latlng[0], segment.start_latlng[1]]} icon={icon}>
+      <Popup>{segment.name}</Popup>
+    </Marker>
+  ));
+
+  return <>{markers}</>;
+};
+
+const SegmentUpdater = ({ mapUpdaveEvent }: { mapUpdaveEvent: (params: MapSearchUpdateParams) => void }) => {
   const { useMapEvents } = require('react-leaflet');
 
   const map = useMapEvents({
     moveend() {
-      getSegments();
+      const b = map.getBounds();
+      const center = b.getCenter();
+      const zoom = map.getZoom();
+      const extend = zoom / 1000;
+
+      const params: MapSearchUpdateParams = {
+        mapSelection: {
+          center: [center.lat, center.lng],
+          zoom,
+        },
+        searchParams: {
+          northEastLng: b.getNorthEast().lng + extend,
+          northEastLat: b.getNorthEast().lat + extend,
+          southWestLng: b.getSouthWest().lng - extend,
+          southWestLat: b.getSouthWest().lat - extend,
+        },
+      };
+      mapUpdaveEvent(params);
     },
   });
-
-  const getSegments = () => {
-    const b = map.getBounds();
-    const extend = map.getZoom() / 1000;
-    const params: SegmentExploreParams = {
-      northEastLng: b.getNorthEast().lng + extend,
-      northEastLat: b.getNorthEast().lat + extend,
-      southWestLng: b.getSouthWest().lng - extend,
-      southWestLat: b.getSouthWest().lat - extend,
-    };
-    updateSegments(params);
-  };
 
   return <></>;
 };

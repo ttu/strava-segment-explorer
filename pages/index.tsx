@@ -6,7 +6,7 @@ import { getStravaAthlete, getStravaUrl } from './api/strava';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
 import dynamic from 'next/dynamic';
-import { SegmentExploreParams, SegmentExploreResponse, StravaSegment } from './api/types';
+import { MapSearchUpdateParams, MapSelection, SegmentExploreParams, SegmentExploreResponse, StravaSegment } from './api/types';
 
 type Token = {
   expires_at: number;
@@ -22,6 +22,9 @@ type User = {
 
 const DISCLAIMER = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
 
+const HELSINKI_LOCATION: [number, number] = [60.192059, 24.945831];
+const DEFAULT_ZOOM = 13;
+
 const MapWithNoSSR = dynamic(() => import('./Map'), { ssr: false });
 
 const Home = ({ stravaLoginUrl, stravaUser }: any) => {
@@ -30,6 +33,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     token: stravaUser ? stravaUser.token : '',
   });
   const [loading, setLoading] = useState<boolean>(false);
+  const [mapSelection, setMapSelection] = useState<MapSelection>({ center: HELSINKI_LOCATION, zoom: DEFAULT_ZOOM});
   const [segments, setSegments] = useState<StravaSegment[]>([]);
   const router = useRouter();
 
@@ -43,6 +47,12 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   const login = () => {
     setLoading(true);
     location.href = stravaLoginUrl;
+  };
+
+  const mapUpdateEvent = async (params: MapSearchUpdateParams) => {
+    const { mapSelection, searchParams } = params;
+    setMapSelection(mapSelection);
+    await updateSegments(searchParams);
   };
 
   const updateSegments = async (params: SegmentExploreParams) => {
@@ -71,14 +81,14 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     ) : (
       <>
         <h3 className={styles.title}>Welcome {user.name}</h3>
-        {user.token ? <Segments segments={segments} /> : <StravaLoginButton loginAction={() => login()} />}
+        {user.token ? null : <StravaLoginButton loginAction={() => login()} />}
       </>
     );
 
     return (
       <>
         <main className={styles.main}>{loginContent}</main>
-        <MapWithNoSSR segments={segments} updateSegments={updateSegments} />
+        <MapWithNoSSR segments={segments} mapSelection={mapSelection} mapUpdateEvent={mapUpdateEvent} />
       </>
     );
   };
@@ -111,17 +121,6 @@ const LoadingComponent = () => (
 const StravaLoginButton = ({ loginAction }: { loginAction: () => void }) => (
   <div onClick={() => loginAction()} style={{ cursor: 'pointer' }}>
     <StarvaConnect />
-  </div>
-);
-
-const Segments = ({ segments }: { segments: StravaSegment[] }) => (
-  <div style={{ paddingTop: '50px' }}>
-    <div>
-      {/* <MapWithNoSSR segments={segments} /> */}
-      {segments.map((s) => (
-        <div key={s.id}>{s.name}</div>
-      ))}
-    </div>
   </div>
 );
 
