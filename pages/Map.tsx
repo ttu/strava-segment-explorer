@@ -44,7 +44,7 @@ const MarkerList = ({ segments }: { segments: StravaSegment[] }) => {
   const icon = L.icon({ iconUrl: '/leaflet/marker-icon.png' });
 
   const markers = segments.map((segment) => (
-    <Marker position={[segment.start_latlng[0], segment.start_latlng[1]]} icon={icon}>
+    <Marker key={segment.id} position={[segment.start_latlng[0], segment.start_latlng[1]]} icon={icon}>
       <Popup>{segment.name}</Popup>
     </Marker>
   ));
