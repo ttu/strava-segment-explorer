@@ -14,6 +14,8 @@ const Map = ({
 }) => {
   // NOTE: Build fails if leaflet is imported in the beginning of the file
   const { isServer } = useSSR();
+  console.log({isServer});
+  
   if (isServer) return <></>;
 
   // https://github.com/PaulLeCam/react-leaflet/issues/45

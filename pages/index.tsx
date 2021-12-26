@@ -6,7 +6,14 @@ import { getStravaAthlete, getStravaUrl } from './api/strava';
 import StarvaConnect from '../public/strava_connect.svg';
 import PoweredByStrava from '../public/powered_by_strava.svg';
 import dynamic from 'next/dynamic';
-import { MapSearchUpdateParams, MapSelection, SegmentExploreParams, SegmentExploreResponse, StravaSegment } from './api/types';
+import {
+  MapSearchUpdateParams,
+  MapSelection,
+  SegmentExploreParams,
+  SegmentExploreResponse,
+  StravaSegment,
+} from './api/types';
+import useSSR from 'use-ssr';
 
 type Token = {
   expires_at: number;
@@ -22,9 +29,6 @@ type User = {
 
 const DISCLAIMER = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
 
-const HELSINKI_LOCATION: [number, number] = [60.192059, 24.945831];
-const DEFAULT_ZOOM = 13;
-
 const MapWithNoSSR = dynamic(() => import('./Map'), { ssr: false });
 
 const Home = ({ stravaLoginUrl, stravaUser }: any) => {
@@ -33,11 +37,12 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
     token: stravaUser ? stravaUser.token : '',
   });
   const [loading, setLoading] = useState<boolean>(false);
-  const [mapSelection, setMapSelection] = useState<MapSelection>({ center: HELSINKI_LOCATION, zoom: DEFAULT_ZOOM});
+  const [mapSelection] = useState<MapSelection>(getLocation() as MapSelection);
   const [segments, setSegments] = useState<StravaSegment[]>([]);
   const router = useRouter();
 
   console.log('Strava user:', stravaUser);
+  console.log({ mapSelection });
 
   useEffect(() => {
     // Remove query params
@@ -51,7 +56,8 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
 
   const mapUpdateEvent = async (params: MapSearchUpdateParams) => {
     const { mapSelection, searchParams } = params;
-    setMapSelection(mapSelection);
+    // No need to re-render when we are already at the same location
+    setLocation(mapSelection);
     await updateSegments(searchParams);
   };
 
@@ -144,6 +150,8 @@ export const getServerSideProps = async (context: any) => {
   const stravaAthlete = context.query.code ? await getStravaAthlete(context.query.code.toString()) : null;
   const stravaUser = stravaAtheleteToUser(stravaAthlete);
 
+  console.log('Server side props:', { stravaLoginUrl, stravaUser });
+
   return {
     props: {
       stravaLoginUrl,
@@ -151,5 +159,18 @@ export const getServerSideProps = async (context: any) => {
     },
   };
 };
+
+const HELSINKI_LOCATION: [number, number] = [60.192059, 24.945831];
+const DEFAULT_ZOOM = 13;
+const DEFAULT_STATE = { center: HELSINKI_LOCATION, zoom: DEFAULT_ZOOM };
+
+const getLocation = () =>
+  useSSR().isBrowser
+    ? localStorage.getItem('location')
+      ? JSON.parse(localStorage.getItem('location')!)
+      : DEFAULT_STATE
+    : DEFAULT_STATE;
+
+const setLocation = (mapState: any) => localStorage.setItem('location', JSON.stringify(mapState));
 
 export default Home;
