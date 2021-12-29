@@ -13,7 +13,7 @@ import {
   SegmentExploreResponse,
   StravaSegment,
 } from './api/types';
-import useSSR from 'use-ssr';
+import useLocalStorageNoState from './useLocalStorageNoState';
 
 type Token = {
   expires_at: number;
@@ -23,21 +23,22 @@ type Token = {
 };
 
 type User = {
-  name: string;
-  token: Token;
+  name: string | undefined;
+  token: Token | undefined;
 };
 
 const DISCLAIMER = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
+const HELSINKI_LOCATION: [number, number] = [60.192059, 24.945831];
+const DEFAULT_ZOOM = 13;
+const DEFAULT_STATE = { center: HELSINKI_LOCATION, zoom: DEFAULT_ZOOM };
+const DEFAULT_USER: User = { name: undefined, token: undefined };
 
 const MapWithNoSSR = dynamic(() => import('./Map'), { ssr: false });
 
-const Home = ({ stravaLoginUrl, stravaUser }: any) => {
-  const [user] = useState<User>({
-    name: stravaUser ? stravaUser.name : '',
-    token: stravaUser ? stravaUser.token : '',
-  });
+const Home = ({ stravaLoginUrl, stravaUser }: {stravaLoginUrl: string, stravaUser: User}) => {
+  const [user] = useState<User>(stravaUser ?? DEFAULT_USER);
   const [loading, setLoading] = useState<boolean>(false);
-  const [mapSelection] = useState<MapSelection>(getLocation() as MapSelection);
+  const [mapSelection, setMapSelection] = useLocalStorageNoState<MapSelection>('location', DEFAULT_STATE);
   const [segments, setSegments] = useState<StravaSegment[]>([]);
   const router = useRouter();
 
@@ -57,7 +58,7 @@ const Home = ({ stravaLoginUrl, stravaUser }: any) => {
   const mapUpdateEvent = async (params: MapSearchUpdateParams) => {
     const { mapSelection, searchParams } = params;
     // No need to re-render when we are already at the same location
-    setLocation(mapSelection);
+    setMapSelection(mapSelection);
     await updateSegments(searchParams);
   };
 
@@ -159,18 +160,5 @@ export const getServerSideProps = async (context: any) => {
     },
   };
 };
-
-const HELSINKI_LOCATION: [number, number] = [60.192059, 24.945831];
-const DEFAULT_ZOOM = 13;
-const DEFAULT_STATE = { center: HELSINKI_LOCATION, zoom: DEFAULT_ZOOM };
-
-const getLocation = () =>
-  useSSR().isBrowser
-    ? localStorage.getItem('location')
-      ? JSON.parse(localStorage.getItem('location')!)
-      : DEFAULT_STATE
-    : DEFAULT_STATE;
-
-const setLocation = (mapState: any) => localStorage.setItem('location', JSON.stringify(mapState));
 
 export default Home;
