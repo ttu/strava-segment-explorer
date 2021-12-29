@@ -4,8 +4,12 @@ const useLocalStorageNoState = <T extends unknown>(key: string, initialValue: T)
   const getValue = () => {
     if (typeof window === 'undefined') return undefined;
     const saved = localStorage.getItem(key);
-    const initial = JSON.parse(saved || '');
-    return initial ?? initialValue;
+    try {
+      const parsed = saved ? JSON.parse(saved) : initialValue;
+      return parsed ?? initialValue;
+    } catch (err) {
+      return initialValue;
+    }
   };
 
   const value: T = getValue();

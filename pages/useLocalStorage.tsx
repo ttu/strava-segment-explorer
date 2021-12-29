@@ -6,8 +6,12 @@ const useLocalStorage = <T extends unknown>(key: string, initialValue: T): [T, (
   const [value, setValue] = useState<T>(() => {
     if (typeof window === 'undefined') return;
     const saved = localStorage.getItem(key);
-    const initial = JSON.parse(saved || '');
-    return initial ?? initialValue;
+    try {
+      const parsed = saved ? JSON.parse(saved) : initialValue;
+      return parsed ?? initialValue;
+    } catch (err) {
+      return initialValue;
+    }
   });
 
   useEffect(() => {
