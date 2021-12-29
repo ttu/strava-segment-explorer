@@ -27,6 +27,11 @@ type User = {
   token: Token | undefined;
 };
 
+type HomeProps = {
+  stravaLoginUrl: string;
+  stravaUser: User;
+};
+
 const DISCLAIMER = `Site doesn't store any of your personal information from Strava. Close the tab or refresh and all information is gone`;
 const HELSINKI_LOCATION: [number, number] = [60.192059, 24.945831];
 const DEFAULT_ZOOM = 13;
@@ -35,7 +40,7 @@ const DEFAULT_USER: User = { name: undefined, token: undefined };
 
 const MapWithNoSSR = dynamic(() => import('./Map'), { ssr: false });
 
-const Home = ({ stravaLoginUrl, stravaUser }: {stravaLoginUrl: string, stravaUser: User}) => {
+const Home = ({ stravaLoginUrl, stravaUser }: HomeProps) => {
   const [user] = useState<User>(stravaUser ?? DEFAULT_USER);
   const [loading, setLoading] = useState<boolean>(false);
   const [mapSelection, setMapSelection] = useLocalStorageNoState<MapSelection>('location', DEFAULT_STATE);

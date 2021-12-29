@@ -3,19 +3,25 @@ import useSSR from 'use-ssr';
 import 'leaflet/dist/leaflet.css';
 import { MapSearchUpdateParams, MapSelection, SegmentExploreParams, StravaSegment } from './api/types';
 
-const Map = ({
-  segments,
-  mapSelection,
-  mapUpdateEvent,
-}: {
+type MapProps = {
   segments: StravaSegment[];
   mapSelection: MapSelection;
   mapUpdateEvent: (params: MapSearchUpdateParams) => void;
-}) => {
+};
+
+type MarkerListProps = {
+  segments: StravaSegment[];
+};
+
+type SegmentUpdaterProps = {
+  mapUpdaveEvent: (params: MapSearchUpdateParams) => void;
+};
+
+const Map = ({ segments, mapSelection, mapUpdateEvent }: MapProps) => {
   // NOTE: Build fails if leaflet is imported in the beginning of the file
   const { isServer } = useSSR();
-  console.log({isServer});
-  
+  console.log({ isServer });
+
   if (isServer) return <></>;
 
   // https://github.com/PaulLeCam/react-leaflet/issues/45
@@ -40,7 +46,7 @@ const Map = ({
   );
 };
 
-const MarkerList = ({ segments }: { segments: StravaSegment[] }) => {
+const MarkerList = ({ segments }: MarkerListProps) => {
   const { Marker, Popup } = require('react-leaflet');
   const L = require('leaflet');
   const icon = L.icon({ iconUrl: '/leaflet/marker-icon.png' });
@@ -54,7 +60,7 @@ const MarkerList = ({ segments }: { segments: StravaSegment[] }) => {
   return <>{markers}</>;
 };
 
-const SegmentUpdater = ({ mapUpdaveEvent }: { mapUpdaveEvent: (params: MapSearchUpdateParams) => void }) => {
+const SegmentUpdater = ({ mapUpdaveEvent }: SegmentUpdaterProps) => {
   const { useMapEvents } = require('react-leaflet');
 
   const map = useMapEvents({
@@ -62,7 +68,7 @@ const SegmentUpdater = ({ mapUpdaveEvent }: { mapUpdaveEvent: (params: MapSearch
       const b = map.getBounds();
       const center = b.getCenter();
       const zoom = map.getZoom();
-      const extend = zoom / 1000;
+      const extend = zoom / 10000;
 
       const params: MapSearchUpdateParams = {
         mapSelection: {
