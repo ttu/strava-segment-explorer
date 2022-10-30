@@ -38,10 +38,13 @@ export const getSegments = async (
   accessToken: string,
   query: SegmentExploreParams
 ): Promise<SegmentExploreResponse> => {
+  // https://developers.strava.com/docs/reference/#api-Segments-exploreSegments
   const params = {
     access_token: accessToken,
     bounds: `${query.southWestLat},${query.southWestLng},${query.northEastLat},${query.northEastLng}`, // e.g. '37.821362,-122.505373,37.842038,-122.465977'
-    activity_type: 'Ride',
+    activity_type: 'riding',
+    // min_cat: 0,
+    // max_cat: 1,
   };
   const result = (await strava.segments.explore(params)) as StravaSegmentsExploreResult;
   return { segments: result.segments };
